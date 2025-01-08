@@ -22,7 +22,7 @@ func SetCookie(w http.ResponseWriter, r *http.Request) {
 }
 
 func GetCookie(w http.ResponseWriter, r *http.Request) {
-	cookie, err := r.Cookie("username")
+	cookie, err := r.Cookie("access_token")
 	if err != nil {
 		w.Write([]byte("cookies not found"))
 		return
@@ -31,17 +31,29 @@ func GetCookie(w http.ResponseWriter, r *http.Request) {
 }
 
 func DeleteCookie(w http.ResponseWriter, r *http.Request) {
+
+	// Check if the cookie exists or not
+	_, err := r.Cookie("access_token")
+	if err != nil {
+		if err == http.ErrNoCookie {
+			w.Write([]byte("cookie not found"))
+			return
+		}
+		// another error
+		http.Error(w, "failed to get cookie", http.StatusInternalServerError)
+		return
+	}
 	// delete cookie
-	cookie := http.Cookie{
-		Name:     "username",
+	cookie := &http.Cookie{
+		Name:     "access_token",
 		Value:    "",
-		MaxAge:   0,
+		MaxAge:   -1,
 		Path:     "/",
 		HttpOnly: true,
 	}
-	http.SetCookie(w, &cookie)
+	http.SetCookie(w, cookie)
 
-	w.Write([]byte("Cookie telah dihapus!"))
+	w.Write([]byte("Cookie successfully deleted!"))
 }
 func main() {
 	http.HandleFunc("/set-cookie", SetCookie)
